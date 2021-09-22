@@ -1,23 +1,24 @@
 
--- Vulkan-Core Dependencies
+-- Tracer Dependencies
 
 -- VULKAN_SDK = os.getenv("VULKAN_SDK")
 
 IncludeDir = {}
-IncludeDir["stb_image"] = "%{wks.location}/Vulkan-Core/vendor/stb_image"
--- IncludeDir["vma"] = "%{wks.location}/Vulkan-Core/vendor/vma"
--- IncludeDir["GLFW"] = "%{wks.location}/Vulkan-Core/vendor/GLFW/include"
--- IncludeDir["ImGui"] = "%{wks.location}/Vulkan-Core/vendor/ImGui"
-IncludeDir["glm"] = "%{wks.location}/Vulkan-Core/vendor/glm"
--- IncludeDir["shaderc"] = "%{wks.location}/Vulkan-Core/vendor/shaderc/include"
--- IncludeDir["SPIRV_Cross"] = "%{wks.location}/Vulkan-Core/vendor/SPIRV-Cross"
+IncludeDir["stb_image"] = "%{wks.location}/Tracer/vendor/stb_image"
+IncludeDir["stb_image_write"] = "%{wks.location}/Tracer/vendor/stb_image_write"
+-- IncludeDir["vma"] = "%{wks.location}/Tracer/vendor/vma"
+-- IncludeDir["GLFW"] = "%{wks.location}/Tracer/vendor/GLFW/include"
+-- IncludeDir["ImGui"] = "%{wks.location}/Tracer/vendor/ImGui"
+IncludeDir["glm"] = "%{wks.location}/Tracer/vendor/glm"
+-- IncludeDir["shaderc"] = "%{wks.location}/Tracer/vendor/shaderc/include"
+-- IncludeDir["SPIRV_Cross"] = "%{wks.location}/Tracer/vendor/SPIRV-Cross"
 -- IncludeDir["VulkanSDK"] = "%{VULKAN_SDK}/Include"
 
 LibraryDir = {}
 
 -- LibraryDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
--- LibraryDir["VulkanSDK_Debug"] = "%{wks.location}/Vulkan-Core/vendor/VulkanSDK/Lib"
--- LibraryDir["VulkanSDK_DebugDLL"] = "%{wks.location}/Vulkan-Core/vendor/VulkanSDK/Bin"
+-- LibraryDir["VulkanSDK_Debug"] = "%{wks.location}/Tracer/vendor/VulkanSDK/Lib"
+-- LibraryDir["VulkanSDK_DebugDLL"] = "%{wks.location}/Tracer/vendor/VulkanSDK/Bin"
 
 Library = {}
 -- Library["Vulkan"] = "%{LibraryDir.VulkanSDK}/vulkan-1.lib"

@@ -16,6 +16,8 @@ project "Tracer"
 		"src/**.cpp",
 		"vendor/stb_image/**.h",
 		"vendor/stb_image/**.cpp",
+		"vendor/stb_image_write/**.h",
+		"vendor/stb_image_write/**.cpp",
 		"vendor/glm/glm/**.hpp",
 		"vendor/glm/glm/**.inl",
 	}
@@ -34,6 +36,7 @@ project "Tracer"
 		-- "%{IncludeDir.ImGui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.stb_image}",
+		"%{IncludeDir.stb_image_write}",
 		-- "%{IncludeDir.vma}",
 		-- "%{IncludeDir.VulkanSDK}"
 	}
