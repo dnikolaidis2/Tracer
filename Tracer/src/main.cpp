@@ -9,15 +9,10 @@
 #include "Hittable.h"
 #include "HittableList.h"
 #include "Sphere.h"
+#include "Utils.h"
+#include "Camera.h"
 
 namespace TC {
-
-    void WriteColor(uint8_t* buffer, glm::dvec3 color)
-    {
-        buffer[0] = static_cast<int>(255.999 * color.r);
-        buffer[1] = static_cast<int>(255.999 * color.g);
-        buffer[2] = static_cast<int>(255.999 * color.b);
-    }
 
     glm::dvec3 RayColor(const Ray& r, const Hittable& world)
     {
@@ -36,9 +31,10 @@ namespace TC {
     {
         // Image
         const auto aspectRatio = 16.0f / 9.0f;
-        const int imageWidth = 400;
+        const int imageWidth = 720;
         const int imageHeight = static_cast<int>(imageWidth / aspectRatio);
         const int channelCount = 3;
+        const int samplesPerPixel = 100;
 
         // World
 
@@ -48,14 +44,7 @@ namespace TC {
 
         // Camera
 
-        auto viewportHeight = 2.0;
-        auto viewportWidth = aspectRatio * viewportHeight;
-        auto focalLength = 1.0;
-
-        auto origin = glm::dvec3(0.0);
-        auto horizontal = glm::dvec3(viewportWidth, 0.0, 0.0);
-        auto vertical = glm::dvec3(0.0, viewportHeight, 0.0);
-        auto lowerLeftCorner = origin - horizontal / 2.0 - vertical / 2.0 - glm::dvec3(0.0, 0.0, focalLength);
+        Camera camera;
 
         // Render
 
@@ -65,12 +54,17 @@ namespace TC {
         for (int j = imageHeight - 1; j >= 0; --j) {
             std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
             for (int i = 0; i < imageWidth; ++i) {
-                auto u = double(i) / (imageWidth - 1);
-                auto v = double(j) / (imageHeight - 1);
-                Ray r(origin, lowerLeftCorner + u * horizontal + v * vertical - origin);
+                glm::dvec3 pixelColor(0.0, 0.0, 0.0);
+                for (int s = 0; s < samplesPerPixel; ++s)
+                {
+                    auto u = (i + RandomDouble()) / (imageWidth - 1);
+                    auto v = (j + RandomDouble()) / (imageHeight - 1);
 
-                glm::dvec3 pixelColor = RayColor(r, world);
-                WriteColor(imageBuffer + imageIndex, pixelColor);
+                    Ray r = camera.GetRay(u, v);
+                    pixelColor += RayColor(r, world);
+                }
+
+                WriteColor(imageBuffer + imageIndex, pixelColor, samplesPerPixel);
                 imageIndex += 3;
             }
         }
