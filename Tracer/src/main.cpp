@@ -23,7 +23,7 @@ namespace TC {
         }
         else
         {
-            return (-halfB - sqrt(discriminant)) / a;
+            return (-halfB - std::sqrt(discriminant)) / a;
         }
     }
 
