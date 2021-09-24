@@ -2,9 +2,14 @@
 
 #include <cmath>
 #include <limits>
+#include <numbers>
 #include <vector>
 #include <random>
 #include <memory>
+
+const double infinity = std::numeric_limits<double>::infinity();
+const double epsilon = std::numeric_limits<double>::epsilon();
+const double pi = std::numbers::pi;
 
 namespace TC {
 

@@ -2,13 +2,18 @@
 
 #include <glm/glm.hpp>
 
+#include "Base.h"
 #include "Ray.h"
 
 namespace TC {
+	class Material;
+
+
 	struct HitRecord
 	{
 		glm::dvec3 Point;
 		glm::dvec3 Normal;
+		Ref<Material> Material;
 		double T;
 		bool FrontFace;
 

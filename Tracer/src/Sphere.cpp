@@ -29,6 +29,7 @@ namespace TC {
 		record.Point = r.At(record.T);
 		glm::dvec3 outwardNormal = (record.Point - Center) / Radius;
 		record.SetFaceNormal(r, outwardNormal);
+		record.Material = Material;
 
 		return true;
 	}

@@ -2,7 +2,8 @@
 
 #include <stb_image_write.h>
 #include <glm/glm.hpp>
-#include <glm/gtx/norm.hpp>
+#include "glm/gtx/string_cast.hpp"
+#include <glm/gtc/random.hpp>
 
 #include "Base.h"
 #include "Ray.h"
@@ -11,15 +12,26 @@
 #include "Sphere.h"
 #include "Utils.h"
 #include "Camera.h"
+#include "Material.h"
 
 namespace TC {
 
-    glm::dvec3 RayColor(const Ray& r, const Hittable& world)
+    glm::dvec3 RayColor(const Ray& r, const Hittable& world, int depth)
     {
         HitRecord record;
-		if (world.Hit(r, 0, INFINITY, record))
+
+        // If we've exceeded the ray bounce limit, no more light is gathered.
+        if (depth <= 0)
+            return glm::dvec3(0.0);
+
+		if (world.Hit(r, 0.001, INFINITY, record))
 		{
-            return 0.5 * glm::dvec3(record.Normal.x + 1, record.Normal.y + 1, record.Normal.z + 1);
+            Ray scattered;
+            glm::dvec3 attenuation;
+            if (record.Material->Scatter(r, record, attenuation, scattered))
+                return attenuation * RayColor(scattered, world, depth - 1);
+
+            return glm::dvec3(0.0);
 		}
 
         glm::dvec3 directionNorm = glm::normalize(r.Direction);
@@ -35,12 +47,22 @@ namespace TC {
         const int imageHeight = static_cast<int>(imageWidth / aspectRatio);
         const int channelCount = 3;
         const int samplesPerPixel = 100;
+        const int maxDepth = 50;
 
         // World
 
         HittableList world;
-        world.Add(CreateRef<Sphere>(glm::dvec3(0.0, 0.0, -1.0), 0.5));
-        world.Add(CreateRef<Sphere>(glm::dvec3(0.0, -100.5, -1.0), 100));
+
+        auto materialGround = CreateRef<Lambertian>(glm::dvec3(0.8, 0.8, 0.0));
+        auto materialCenter = CreateRef<Lambertian>(glm::dvec3(0.1, 0.2, 0.5));
+        auto materialLeft = CreateRef<Dielectric>(1.5);
+        auto materialRight = CreateRef<Metal>(glm::dvec3(0.8, 0.6, 0.2), 1.0);
+
+        world.Add(CreateRef<Sphere>(glm::dvec3(0.0, -100.5, -1.0), 100.0, materialGround));
+        world.Add(CreateRef<Sphere>(glm::dvec3(0.0, 0.0, -1.0), 0.5, materialCenter));
+        world.Add(CreateRef<Sphere>(glm::dvec3(-1.0, 0.0, -1.0), 0.5, materialLeft));
+        world.Add(CreateRef<Sphere>(glm::dvec3(-1.0, 0.0, -1.0), -0.4, materialLeft));
+        world.Add(CreateRef<Sphere>(glm::dvec3(1.0, 0.0, -1.0), 0.5, materialRight));
 
         // Camera
 
@@ -52,7 +74,7 @@ namespace TC {
 
         int imageIndex = 0;
         for (int j = imageHeight - 1; j >= 0; --j) {
-            std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+            std::cerr << "\rProgress: " << (1 - ((float)j / (float)imageHeight))*100.0f << "% " << std::flush;
             for (int i = 0; i < imageWidth; ++i) {
                 glm::dvec3 pixelColor(0.0, 0.0, 0.0);
                 for (int s = 0; s < samplesPerPixel; ++s)
@@ -61,7 +83,7 @@ namespace TC {
                     auto v = (j + RandomDouble()) / (imageHeight - 1);
 
                     Ray r = camera.GetRay(u, v);
-                    pixelColor += RayColor(r, world);
+                    pixelColor += RayColor(r, world, maxDepth);
                 }
 
                 WriteColor(imageBuffer + imageIndex, pixelColor, samplesPerPixel);

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <glm/gtc/random.hpp>
+#include <glm/gtx/norm.hpp>
 
 #include "Base.h"
 
@@ -13,9 +15,9 @@ namespace TC {
 
 		// Divide the color by the number of samples.
 		auto scale = 1.0 / samplesPerPixel;
-		r *= scale;
-		g *= scale;
-		b *= scale;
+		r = std::sqrt(scale * r);
+		g = std::sqrt(scale * g);
+		b = std::sqrt(scale * b);
 
 		// Write the translated [0,255] value of each color component.
 		buffer[0] = static_cast<int>(256 * glm::clamp(r, 0.0, 0.999));
