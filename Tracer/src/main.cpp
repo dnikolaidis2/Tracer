@@ -24,7 +24,7 @@ namespace TC {
         if (depth <= 0)
             return glm::dvec3(0.0);
 
-		if (world.Hit(r, 0.001, INFINITY, record))
+		if (world.Hit(r, 0.001, infinity, record))
 		{
             Ray scattered;
             glm::dvec3 attenuation;
@@ -39,34 +39,89 @@ namespace TC {
         return (1.0 - t) * glm::dvec3(1.0, 1.0, 1.0) + t * glm::dvec3(0.5, 0.7, 1.0);
     }
 
+    HittableList RandomScene() {
+        HittableList world;
+
+        auto ground_material = CreateRef<Lambertian>(glm::dvec3(0.5, 0.5, 0.5));
+        world.Add(CreateRef<Sphere>(glm::dvec3(0, -1000, 0), 1000, ground_material));
+
+        for (int a = -11; a < 11; a++) {
+            for (int b = -11; b < 11; b++) {
+                auto choose_mat = RandomDouble();
+                glm::dvec3 center(a + 0.9 * RandomDouble(), 0.2, b + 0.9 * RandomDouble());
+
+                if ((center - glm::dvec3(4, 0.2, 0)).length() > 0.9) {
+                    Ref<Material> sphere_material;
+
+                    if (choose_mat < 0.8) {
+                        // diffuse
+                        auto albedo = glm::linearRand(glm::dvec3(0.0), glm::dvec3(1.0));
+                        sphere_material = CreateRef<Lambertian>(albedo);
+                        world.Add(CreateRef<Sphere>(center, 0.2, sphere_material));
+                    }
+                    else if (choose_mat < 0.95) {
+                        // metal
+                        auto albedo = glm::linearRand(glm::dvec3(0.5), glm::dvec3(1.0));
+                        auto fuzz = RandomDouble(0, 0.5);
+                        sphere_material = CreateRef<Metal>(albedo, fuzz);
+                        world.Add(CreateRef<Sphere>(center, 0.2, sphere_material));
+                    }
+                    else {
+                        // glass
+                        sphere_material = CreateRef<Dielectric>(1.5);
+                        world.Add(CreateRef<Sphere>(center, 0.2, sphere_material));
+                    }
+                }
+            }
+        }
+
+        auto material1 = CreateRef<Dielectric>(1.5);
+        world.Add(CreateRef<Sphere>(glm::dvec3(0, 1, 0), 1.0, material1));
+
+        auto material2 = CreateRef<Lambertian>(glm::dvec3(0.4, 0.2, 0.1));
+        world.Add(CreateRef<Sphere>(glm::dvec3(-4, 1, 0), 1.0, material2));
+
+        auto material3 = CreateRef<Metal>(glm::dvec3(0.7, 0.6, 0.5), 0.0);
+        world.Add(CreateRef<Sphere>(glm::dvec3(4, 1, 0), 1.0, material3));
+
+        return world;
+    }
+
     int EntryPoint()
     {
         // Image
         const auto aspectRatio = 16.0f / 9.0f;
-        const int imageWidth = 720;
+        const int imageWidth = 1920;
         const int imageHeight = static_cast<int>(imageWidth / aspectRatio);
         const int channelCount = 3;
-        const int samplesPerPixel = 100;
+        const int samplesPerPixel = 500;
         const int maxDepth = 50;
 
         // World
 
-        HittableList world;
+        HittableList world = RandomScene();
+        /*HittableList world;
 
         auto materialGround = CreateRef<Lambertian>(glm::dvec3(0.8, 0.8, 0.0));
         auto materialCenter = CreateRef<Lambertian>(glm::dvec3(0.1, 0.2, 0.5));
         auto materialLeft = CreateRef<Dielectric>(1.5);
         auto materialRight = CreateRef<Metal>(glm::dvec3(0.8, 0.6, 0.2), 1.0);
-
+        
         world.Add(CreateRef<Sphere>(glm::dvec3(0.0, -100.5, -1.0), 100.0, materialGround));
         world.Add(CreateRef<Sphere>(glm::dvec3(0.0, 0.0, -1.0), 0.5, materialCenter));
         world.Add(CreateRef<Sphere>(glm::dvec3(-1.0, 0.0, -1.0), 0.5, materialLeft));
         world.Add(CreateRef<Sphere>(glm::dvec3(-1.0, 0.0, -1.0), -0.4, materialLeft));
-        world.Add(CreateRef<Sphere>(glm::dvec3(1.0, 0.0, -1.0), 0.5, materialRight));
+        world.Add(CreateRef<Sphere>(glm::dvec3(1.0, 0.0, -1.0), 0.5, materialRight));*/
 
         // Camera
 
-        Camera camera;
+        glm::dvec3 lookFrom(13.0, 2.0, 3.0);
+        glm::dvec3 lookAt(0.0, 0.0, 0.0);
+        glm::dvec3 vup(0.0, 1.0, 0.0);
+        auto distToFocus = 10;
+        auto aperture = 0.1;
+
+        Camera camera(lookFrom, lookAt, vup, 20.0, aspectRatio, aperture, distToFocus);
 
         // Render
 

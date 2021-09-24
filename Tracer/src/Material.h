@@ -20,7 +20,7 @@ namespace TC {
 
 		virtual bool Scatter(const Ray& rIn, const HitRecord& record, glm::dvec3& attenuation, Ray& scattered) const override
 		{
-			auto scatterDirection = record.Normal + glm::sphericalRand(1.0);
+			auto scatterDirection = record.Normal + glm::ballRand(1.0);
 
 			// Catch degenerate scatter direction
 			if (glm::all(glm::epsilonEqual(scatterDirection, glm::dvec3(0.0), epsilon)))
@@ -43,7 +43,7 @@ namespace TC {
 		virtual bool Scatter(const Ray& rIn, const HitRecord& record, glm::dvec3& attenuation, Ray& scattered) const override
 		{
 			glm::dvec3 reflected = glm::reflect(glm::normalize(rIn.Direction), record.Normal);
-			scattered = Ray(record.Point, reflected + glm::sphericalRand(Fuzziness));
+			scattered = Ray(record.Point, reflected + Fuzziness * glm::ballRand(1.0));
 			attenuation = Albedo;
 			return (glm::dot(scattered.Direction, record.Normal) > 0);
 		}
