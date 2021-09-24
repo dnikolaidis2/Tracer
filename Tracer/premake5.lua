@@ -24,15 +24,13 @@ project "Tracer"
 
 	defines
 	{
-		"_CRT_SECURE_NO_WARNINGS",
-		-- "GLFW_INCLUDE_VULKAN",
 	}
 
 	includedirs
 	{
 		"src",
 		-- "vendor/spdlog/include",
-		-- "%{IncludeDir.GLFW}",
+		"%{IncludeDir.GLFW}",
 		-- "%{IncludeDir.ImGui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.stb_image}",
@@ -43,7 +41,7 @@ project "Tracer"
 
 	links
 	{
-		-- "GLFW",
+		"GLFW",
 		-- "ImGui",
 	}
 

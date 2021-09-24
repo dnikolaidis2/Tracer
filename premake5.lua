@@ -26,7 +26,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 group "Dependencies"
 	include "vendor/premake"
-	-- include "Vulkan-Core/vendor/GLFW"
+	include "Tracer/vendor/GLFW"
 	-- include "Vulkan-Core/vendor/imgui"
 group ""
 
