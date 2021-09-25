@@ -92,11 +92,15 @@ namespace TC {
     {
         // Image
         const auto aspectRatio = 16.0f / 9.0f;
-        const int imageWidth = 1920;
+        const int imageWidth = 500;
         const int imageHeight = static_cast<int>(imageWidth / aspectRatio);
         const int channelCount = 3;
-        const int samplesPerPixel = 500;
+        const int samplesPerPixel = 10;
         const int maxDepth = 50;
+
+        // Window
+        Window window(imageWidth, imageHeight, "Tracer");
+        window.Init();
 
         // World
 
@@ -150,6 +154,13 @@ namespace TC {
         std::cerr << "\nDone.\n";
 
         stbi_write_jpg("output.jpeg", imageWidth, imageHeight, channelCount, imageBuffer, 100);
+
+        window.WriteToScreen(imageWidth, imageHeight, imageBuffer);
+
+        while (!window.ShouldWindowClose())
+        {
+            window.Render();
+        }
 
         return 0;
     }
