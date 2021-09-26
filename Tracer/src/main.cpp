@@ -17,6 +17,16 @@
 
 namespace TC {
 
+    // Image
+    static const auto aspectRatio = 16.0f / 9.0f;
+    static const int imageHeight = 1080;
+    static const int imageWidth = static_cast<int>(imageHeight * aspectRatio);
+    static const int channelCount = 3;
+    static const int samplesPerPixel = 500;
+    static const int maxDepth = 50;
+    static const int bufferSize = imageWidth * imageHeight * channelCount;
+    static const int totalPixels = imageWidth * imageHeight;
+
     glm::dvec3 RayColor(const Ray& r, const Hittable& world, int depth)
     {
         HitRecord record;
@@ -88,19 +98,36 @@ namespace TC {
         return world;
     }
 
+    void RenderPartition(uint8_t* buffer, int width, int height, int posY, const Camera& camera, const HittableList& world, RendererStats* stats)
+    {
+        int imageIndex = 0;
+        for (int j = 0; j < height; ++j) {
+            for (int i = 0; i < width; ++i) {
+                glm::dvec3 pixelColor(0.0);
+                for (int s = 0; s < samplesPerPixel; ++s)
+                {
+                    auto u = (i + RandomDouble()) / (imageWidth - 1);
+                    auto v = (posY + j + RandomDouble()) / (imageHeight - 1);
+
+                    Ray r = camera.GetRay(u, v);
+                    pixelColor += RayColor(r, world, maxDepth);
+                }
+
+                WriteColor(buffer + imageIndex, pixelColor, samplesPerPixel);
+                imageIndex += 3;
+                stats->PixelsRendered += 1;
+            }
+        }
+    }
+
     int EntryPoint()
     {
-        // Image
-        const auto aspectRatio = 16.0f / 9.0f;
-        const int imageWidth = 500;
-        const int imageHeight = static_cast<int>(imageWidth / aspectRatio);
-        const int channelCount = 3;
-        const int samplesPerPixel = 10;
-        const int maxDepth = 50;
-
         // Window
         Window window(imageWidth, imageHeight, "Tracer");
-        window.Init();
+
+    	// Threads
+        const int threadCount = 16;
+        auto threadPool = new std::thread[threadCount];
 
         // World
 
@@ -129,32 +156,42 @@ namespace TC {
         Camera camera(lookFrom, lookAt, vup, 20.0, aspectRatio, aperture, distToFocus);
 
         // Render
-
-        uint8_t* imageBuffer = new uint8_t[imageWidth * imageHeight * channelCount];
-
-        int imageIndex = 0;
-        for (int j = imageHeight - 1; j >= 0; --j) {
-            std::cerr << "\rProgress: " << (1 - ((float)j / (float)imageHeight))*100.0f << "% " << std::flush;
-            for (int i = 0; i < imageWidth; ++i) {
-                glm::dvec3 pixelColor(0.0, 0.0, 0.0);
-                for (int s = 0; s < samplesPerPixel; ++s)
-                {
-                    auto u = (i + RandomDouble()) / (imageWidth - 1);
-                    auto v = (j + RandomDouble()) / (imageHeight - 1);
-
-                    Ray r = camera.GetRay(u, v);
-                    pixelColor += RayColor(r, world, maxDepth);
-                }
-
-                WriteColor(imageBuffer + imageIndex, pixelColor, samplesPerPixel);
-                imageIndex += 3;
+        RendererStats stats = {0};
+        uint8_t* imageBuffer = new uint8_t[bufferSize];
+        
+        for (int i = 0; i < threadCount; ++i)
+        {
+            int remainder = 0;
+            if ((i == threadCount - 1) && (imageHeight % threadCount != 0))
+            {
+                remainder = imageHeight % threadCount;
             }
+
+            threadPool[i] = std::thread(RenderPartition,
+                imageBuffer + (i * (imageHeight / threadCount) * imageWidth * channelCount),
+                imageWidth,
+                (imageHeight / threadCount) + remainder,
+                i * (imageHeight / threadCount),
+                camera, world, &stats);
+        }
+
+        while (stats.PixelsRendered != totalPixels)
+        {
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+            std::cerr << "\rProgress: " << ((float)stats.PixelsRendered / (float)totalPixels) * 100.0f << "% " << std::flush;
+        }
+
+        for (int i = 0; i < threadCount; ++i)
+        {
+            threadPool[i].join();
         }
 
         std::cerr << "\nDone.\n";
 
+        stbi_flip_vertically_on_write(true);
         stbi_write_jpg("output.jpeg", imageWidth, imageHeight, channelCount, imageBuffer, 100);
 
+        window.Init();
         window.WriteToScreen(imageWidth, imageHeight, imageBuffer);
 
         while (!window.ShouldWindowClose())

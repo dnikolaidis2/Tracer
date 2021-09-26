@@ -7,6 +7,11 @@
 #include "Base.h"
 
 namespace TC {
+	struct RendererStats
+	{
+		std::atomic<int> PixelsRendered;
+	};
+
 	void WriteColor(uint8_t* buffer, glm::dvec3 color, int samplesPerPixel)
 	{
 		auto r = color.r;
