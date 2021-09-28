@@ -12,13 +12,13 @@ namespace TC {
 		virtual glm::dvec3 Value(double u, double v, const glm::dvec3& point) const = 0;
 	};
 
-	class SolidTexture : public Texture
+	class SolidColor : public Texture
 	{
 	public:
-		SolidTexture() = default;
-		SolidTexture(glm::dvec3 color) : m_Color(color) {}
+		SolidColor() = default;
+		SolidColor(glm::dvec3 color) : m_Color(color) {}
 
-		SolidTexture(double r, double g, double b) : m_Color(r, g, b) {}
+		SolidColor(double r, double g, double b) : m_Color(r, g, b) {}
 
 		virtual glm::dvec3 Value(double u, double v, const glm::dvec3& point) const override
 		{
@@ -34,7 +34,7 @@ namespace TC {
 		CheckerTexture() {}
 		CheckerTexture(Ref<Texture> evenTexture, Ref<Texture> oddTexture) : m_OddTexture(oddTexture), m_EvenTexture(evenTexture) {}
 
-		CheckerTexture(glm::dvec3 evenColor, glm::dvec3 oddColor) : m_OddTexture(CreateRef<SolidTexture>(oddColor)), m_EvenTexture(CreateRef<SolidTexture>(evenColor)) {}
+		CheckerTexture(glm::dvec3 evenColor, glm::dvec3 oddColor) : m_OddTexture(CreateRef<SolidColor>(oddColor)), m_EvenTexture(CreateRef<SolidColor>(evenColor)) {}
 
 		virtual glm::dvec3 Value(double u, double v, const glm::dvec3& point) const override
 		{

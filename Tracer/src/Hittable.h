@@ -33,4 +33,32 @@ namespace TC {
 		virtual bool Hit(const Ray& r, double tMin, double tMax, HitRecord& record) const = 0;
 		virtual bool BoundingBox(double time0, double time1, AABB& outputBox) const = 0;
 	};
+
+	class Translate : public Hittable
+	{
+	public:
+		Translate(Ref<Hittable> object, const glm::dvec3& displacement)
+			: Object(object), Offset(displacement) {}
+
+		virtual bool Hit(const Ray& r, double tMin, double tMax, HitRecord& record) const override;
+		virtual bool BoundingBox(double time0, double time1, AABB& outputBox) const override;
+	public:
+		Ref<Hittable> Object;
+		glm::dvec3 Offset;
+	};
+
+	class RotateY : public Hittable
+	{
+	public:
+		RotateY(Ref<Hittable> object, double angle);
+
+		virtual bool Hit(const Ray& r, double tMin, double tMax, HitRecord& record) const override;
+		virtual bool BoundingBox(double time0, double time1, AABB& outputBox) const override;
+	public:
+		Ref<Hittable> Object;
+		double SinTheta;
+		double CosTheta;
+		bool HasBox;
+		AABB Box;
+	};
 }

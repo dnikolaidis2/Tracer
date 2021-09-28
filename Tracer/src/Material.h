@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/gtc/random.hpp>
+#include <glm/gtc/epsilon.hpp>
 
 #include "Ray.h"
 #include "Texture.h"
@@ -21,7 +22,7 @@ namespace TC {
 	class Lambertian : public Material
 	{
 	public:
-		Lambertian(const glm::dvec3& albedo) : Albedo(CreateRef<SolidTexture>(albedo)) {}
+		Lambertian(const glm::dvec3& albedo) : Albedo(CreateRef<SolidColor>(albedo)) {}
 		Lambertian(Ref<Texture> texture) : Albedo(texture) {}
 
 		virtual bool Scatter(const Ray& rIn, const HitRecord& record, glm::dvec3& attenuation, Ray& scattered) const override
@@ -100,7 +101,7 @@ namespace TC {
 	{
 	public:
 		DiffuseLight(Ref<Texture> texture) : Emission(texture) {}
-		DiffuseLight(glm::dvec3 color) : Emission(CreateRef<SolidTexture>(color)) {}
+		DiffuseLight(glm::dvec3 color) : Emission(CreateRef<SolidColor>(color)) {}
 
 		virtual bool Scatter(const Ray& rIn, const HitRecord& record, glm::dvec3& attenuation, Ray& scattered) const override
 		{
@@ -113,5 +114,22 @@ namespace TC {
 		}
 	public:
 		Ref<Texture> Emission;
+	};
+
+	class Isotropic : public Material
+	{
+	public:
+		Isotropic(glm::dvec3 color) : Albedo(CreateRef<SolidColor>(color)) {}
+		Isotropic(Ref<Texture> albedo) : Albedo(albedo) {}
+
+		virtual bool Scatter(const Ray& rIn, const HitRecord& record, glm::dvec3& attenuation, Ray& scattered) const override
+		{
+			scattered = Ray(record.Point, glm::sphericalRand(1.0), rIn.Time);
+			attenuation = Albedo->Value(record.U, record.V, record.Point);
+
+			return true;
+		}
+	public:
+		Ref<Texture> Albedo;
 	};
 }

@@ -13,6 +13,7 @@
 #include "Sphere.h"
 #include "Utils.h"
 #include "Camera.h"
+#include "ConstantMedium.h"
 #include "Material.h"
 #include "Window/Window.h"
 
@@ -21,7 +22,7 @@ namespace TC {
     // Image
     // static const auto aspectRatio = 16.0f / 9.0f;
     static const auto aspectRatio = 1.0;
-    static const int imageHeight = 720;
+    static const int imageHeight = 800;
     static const int imageWidth = static_cast<int>(imageHeight * aspectRatio);
     static const int channelCount = 3;
     static int samplesPerPixel = 200;
@@ -183,8 +184,107 @@ namespace TC {
         objects.Add(CreateRef<XZRect>(0, 555, 0, 555, 555, white));
         objects.Add(CreateRef<XYRect>(0, 555, 0, 555, 555, white));
 
-        objects.Add(make_shared<Box>(glm::dvec3(130, 0, 65), glm::dvec3(295, 165, 230), white));
-        objects.Add(make_shared<Box>(glm::dvec3(265, 0, 295), glm::dvec3(430, 330, 460), white));
+        Ref<Hittable> box1 = CreateRef<Box>(glm::dvec3(0, 0, 0), glm::dvec3(165, 330, 165), white);
+        box1 = CreateRef<RotateY>(box1, 15);
+        box1 = CreateRef<Translate>(box1, glm::dvec3(265, 0, 295));
+        objects.Add(box1);
+
+        Ref<Hittable> box2 = CreateRef<Box>(glm::dvec3(0, 0, 0), glm::dvec3(165, 165, 165), white);
+        box2 = CreateRef<RotateY>(box2, -18);
+        box2 = CreateRef<Translate>(box2, glm::dvec3(130, 0, 65));
+        objects.Add(box2);
+
+        return objects;
+    }
+
+    HittableList SmokeBox() {
+        HittableList objects;
+
+        auto red = CreateRef<Lambertian>(glm::dvec3(.65, .05, .05));
+        auto white = CreateRef<Lambertian>(glm::dvec3(.73, .73, .73));
+        auto green = CreateRef<Lambertian>(glm::dvec3(.12, .45, .15));
+        auto light = CreateRef<DiffuseLight>(glm::dvec3(15, 15, 15));
+
+        objects.Add(CreateRef<YZRect>(0, 555, 0, 555, 555, green));
+        objects.Add(CreateRef<YZRect>(0, 555, 0, 555, 0, red));
+        objects.Add(CreateRef<XZRect>(213, 343, 227, 332, 554, light));
+        objects.Add(CreateRef<XZRect>(0, 555, 0, 555, 0, white));
+        objects.Add(CreateRef<XZRect>(0, 555, 0, 555, 555, white));
+        objects.Add(CreateRef<XYRect>(0, 555, 0, 555, 555, white));
+
+        Ref<Hittable> box1 = CreateRef<Box>(glm::dvec3(0, 0, 0), glm::dvec3(165, 330, 165), white);
+        box1 = CreateRef<RotateY>(box1, 15);
+        box1 = CreateRef<Translate>(box1, glm::dvec3(265, 0, 295));
+        objects.Add(CreateRef<ConstantMedium>(box1, 0.01, glm::dvec3(0.0)));
+
+        Ref<Hittable> box2 = CreateRef<Box>(glm::dvec3(0, 0, 0), glm::dvec3(165, 165, 165), white);
+        box2 = CreateRef<RotateY>(box2, -18);
+        box2 = CreateRef<Translate>(box2, glm::dvec3(130, 0, 65));
+        objects.Add(CreateRef<ConstantMedium>(box2, 0.01, glm::dvec3(1.0)));
+
+        return objects;
+    }
+
+    HittableList FinalScene() {
+        HittableList boxes1;
+        auto ground = CreateRef<Lambertian>(glm::dvec3(0.48, 0.83, 0.53));
+
+        const int boxesPerSide = 20;
+        for (int i = 0; i < boxesPerSide; i++) {
+            for (int j = 0; j < boxesPerSide; j++) {
+                auto w = 100.0;
+                auto x0 = -1000.0 + i * w;
+                auto z0 = -1000.0 + j * w;
+                auto y0 = 0.0;
+                auto x1 = x0 + w;
+                auto y1 = glm::linearRand(1, 101);
+                auto z1 = z0 + w;
+
+                boxes1.Add(CreateRef<Box>(glm::dvec3(x0, y0, z0), glm::dvec3(x1, y1, z1), ground));
+            }
+        }
+
+        HittableList objects;
+
+        objects.Add(CreateRef<BVHNode>(boxes1, 0, 1));
+
+        auto light = CreateRef<DiffuseLight>(glm::dvec3(7, 7, 7));
+        objects.Add(CreateRef<XZRect>(123, 423, 147, 412, 554, light));
+
+        auto center1 = glm::dvec3(400, 400, 200);
+        auto center2 = center1 + glm::dvec3(30, 0, 0);
+        auto moving_sphere_material = CreateRef<Lambertian>(glm::dvec3(0.7, 0.3, 0.1));
+        objects.Add(CreateRef<MovingSphere>(center1, center2, 0, 1, 50, moving_sphere_material));
+
+        objects.Add(CreateRef<Sphere>(glm::dvec3(260, 150, 45), 50, CreateRef<Dielectric>(1.5)));
+        objects.Add(CreateRef<Sphere>(
+            glm::dvec3(0, 150, 145), 50, CreateRef<Metal>(glm::dvec3(0.8, 0.8, 0.9), 1.0)
+            ));
+
+        auto boundary = CreateRef<Sphere>(glm::dvec3(360, 150, 145), 70, CreateRef<Dielectric>(1.5));
+        objects.Add(boundary);
+        objects.Add(CreateRef<ConstantMedium>(boundary, 0.2, glm::dvec3(0.2, 0.4, 0.9)));
+        boundary = CreateRef<Sphere>(glm::dvec3(0, 0, 0), 5000, CreateRef<Dielectric>(1.5));
+        objects.Add(CreateRef<ConstantMedium>(boundary, .0001, glm::dvec3(1, 1, 1)));
+
+        auto emat = CreateRef<Lambertian>(CreateRef<ImageTexture>("earthmap.jpg"));
+        objects.Add(CreateRef<Sphere>(glm::dvec3(400, 200, 400), 100, emat));
+        auto pertext = CreateRef<NoiseTexture>(0.1);
+        objects.Add(CreateRef<Sphere>(glm::dvec3(220, 280, 300), 80, CreateRef<Lambertian>(pertext)));
+
+        HittableList boxes2;
+        auto white = CreateRef<Lambertian>(glm::dvec3(.73, .73, .73));
+        int ns = 1000;
+        for (int j = 0; j < ns; j++) {
+            boxes2.Add(CreateRef<Sphere>(glm::linearRand(glm::dvec3(0), glm::dvec3(165)), 10, white));
+        }
+
+        objects.Add(CreateRef<Translate>(
+            CreateRef<RotateY>(
+                CreateRef<BVHNode>(boxes2, 0.0, 1.0), 15),
+            glm::dvec3(-100, 270, 395)
+            )
+        );
 
         return objects;
     }
@@ -195,7 +295,7 @@ namespace TC {
         Window window(imageWidth, imageHeight, "Tracer");
 
     	// Threads
-        const int threadCount = 16;
+        const int threadCount = 12;
         auto threadPool = new std::thread[threadCount];
 
         // World
@@ -249,12 +349,29 @@ namespace TC {
                 lookAt = glm::dvec3(0, 2, 0);
                 vFOV = 20.0;
                 break;
-
-            default:
+                
             case 6:
                 world = CornellBox();
                 background = glm::dvec3(0, 0, 0);
                 lookFrom = glm::dvec3(278, 278, -800);
+                lookAt = glm::dvec3(278, 278, 0);
+                vFOV = 40.0;
+                break;
+                
+            case 7:
+                world = SmokeBox();
+                background = glm::dvec3(0, 0, 0);
+                lookFrom = glm::dvec3(278, 278, -800);
+                lookAt = glm::dvec3(278, 278, 0);
+                vFOV = 40.0;
+                break;
+
+            default:
+            case 8:
+                world = FinalScene();
+                samplesPerPixel = 10000;
+                background = glm::dvec3(0, 0, 0);
+                lookFrom = glm::dvec3(478, 278, -600);
                 lookAt = glm::dvec3(278, 278, 0);
                 vFOV = 40.0;
                 break;
