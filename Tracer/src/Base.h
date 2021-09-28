@@ -9,6 +9,7 @@
 #include <memory>
 #include <thread>
 #include <atomic>
+#include <iostream>
 
 const double infinity = std::numeric_limits<double>::infinity();
 const double epsilon = std::numeric_limits<double>::epsilon();

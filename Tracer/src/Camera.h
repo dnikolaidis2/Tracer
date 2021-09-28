@@ -8,7 +8,7 @@ namespace TC {
 	class Camera
 	{
 	public:
-		Camera(glm::dvec3 lookFrom, glm::dvec3 looAt, glm::dvec3 vup, double vFOV, double aspectRatio, double aperture, double focusDist);
+		Camera(glm::dvec3 lookFrom, glm::dvec3 looAt, glm::dvec3 vup, double vFOV, double aspectRatio, double aperture, double focusDist, double startTime = 0, double endTime = 0);
 		Ray GetRay(double s, double t) const;
 	private:
 		glm::dvec3 m_Origin;
@@ -17,5 +17,7 @@ namespace TC {
 		glm::dvec3 m_Vertical;
 		glm::dvec3 m_U, m_V, m_W;
 		double m_LensRadius;
+		double m_StartTime;
+		double m_EndTime;
 	};
 }

@@ -7,7 +7,8 @@
 
 namespace TC {
 
-	Camera::Camera(glm::dvec3 lookFrom, glm::dvec3 lookAt, glm::dvec3 vup, double vFOV, double aspectRatio, double aperture, double focusDist)
+	Camera::Camera(glm::dvec3 lookFrom, glm::dvec3 lookAt, glm::dvec3 vup, double vFOV, double aspectRatio, double aperture, double focusDist, double startTime, double endTime)
+		: m_StartTime(startTime), m_EndTime(endTime)
 	{
 		auto theta = glm::radians(vFOV);
 		auto h = std::tan(theta / 2);
@@ -30,6 +31,6 @@ namespace TC {
 	{
 		glm::dvec2 rayOrigin = m_LensRadius * glm::diskRand(1.0);
 		glm::dvec3 offset = m_U * rayOrigin.x + m_V * rayOrigin.y;
-		return Ray(m_Origin + offset, m_LowerLeftCorner + s * m_Horizontal + t * m_Vertical - m_Origin - offset);
+		return Ray(m_Origin + offset, m_LowerLeftCorner + s * m_Horizontal + t * m_Vertical - m_Origin - offset, glm::linearRand(m_StartTime, m_EndTime));
 	}
 }

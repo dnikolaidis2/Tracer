@@ -7,8 +7,8 @@ namespace TC {
 	{
 	public:
 		Ray() {}
-		Ray(const glm::dvec3& origin, const glm::dvec3& direction)
-			: Origin(origin), Direction(direction)
+		Ray(const glm::dvec3& origin, const glm::dvec3& direction, double time = 0.0)
+			: Origin(origin), Direction(direction), Time(time)
 		{}
 
 		// glm::dvec3 GetOrigin() const { return m_Origin; }
@@ -23,5 +23,6 @@ namespace TC {
 	public:
 		glm::dvec3 Origin;
 		glm::dvec3 Direction;
+		double Time;
 	};
 }

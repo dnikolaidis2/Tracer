@@ -1,11 +1,10 @@
-#include <iostream>
-
 #include <stb_image_write.h>
 #include <glm/glm.hpp>
 #include "glm/gtx/string_cast.hpp"
 #include <glm/gtc/random.hpp>
 
 #include "Base.h"
+#include "BVH.h"
 #include "Ray.h"
 #include "Hittable.h"
 #include "HittableList.h"
@@ -19,10 +18,10 @@ namespace TC {
 
     // Image
     static const auto aspectRatio = 16.0f / 9.0f;
-    static const int imageHeight = 1080;
+    static const int imageHeight = 720;
     static const int imageWidth = static_cast<int>(imageHeight * aspectRatio);
     static const int channelCount = 3;
-    static const int samplesPerPixel = 500;
+    static const int samplesPerPixel = 100;
     static const int maxDepth = 50;
     static const int bufferSize = imageWidth * imageHeight * channelCount;
     static const int totalPixels = imageWidth * imageHeight;
@@ -53,8 +52,8 @@ namespace TC {
     HittableList RandomScene() {
         HittableList world;
 
-        auto ground_material = CreateRef<Lambertian>(glm::dvec3(0.5, 0.5, 0.5));
-        world.Add(CreateRef<Sphere>(glm::dvec3(0, -1000, 0), 1000, ground_material));
+        auto checker = CreateRef<CheckerTexture>(glm::dvec3(0.2, 0.3, 0.1), glm::dvec3(0.9, 0.9, 0.9));
+        world.Add(CreateRef<Sphere>(glm::dvec3(0, -1000, 0), 1000, CreateRef<Lambertian>(checker)));
 
         for (int a = -11; a < 11; a++) {
             for (int b = -11; b < 11; b++) {
@@ -68,7 +67,8 @@ namespace TC {
                         // diffuse
                         auto albedo = glm::linearRand(glm::dvec3(0.0), glm::dvec3(1.0));
                         sphere_material = CreateRef<Lambertian>(albedo);
-                        world.Add(CreateRef<Sphere>(center, 0.2, sphere_material));
+                        auto center2 = center + glm::dvec3(0, glm::linearRand(0.0, 0.5), 0);
+                        world.Add(CreateRef<MovingSphere>(center, center2, 0.0, 1.0, 0.2, sphere_material));
                     }
                     else if (choose_mat < 0.95) {
                         // metal
@@ -98,7 +98,7 @@ namespace TC {
         return world;
     }
 
-    void RenderPartition(uint8_t* buffer, int width, int height, int posY, const Camera& camera, const HittableList& world, RendererStats* stats)
+    void RenderPartition(uint8_t* buffer, int width, int height, int posY, const Camera& camera, const Hittable& world, RendererStats* stats)
     {
         int imageIndex = 0;
         for (int j = 0; j < height; ++j) {
@@ -120,6 +120,38 @@ namespace TC {
         }
     }
 
+    HittableList TwoSpheres() {
+        HittableList objects;
+
+        auto checker = CreateRef<CheckerTexture>(glm::dvec3(0.2, 0.3, 0.1), glm::dvec3(0.9, 0.9, 0.9));
+
+        objects.Add(CreateRef<Sphere>(glm::dvec3(0, -10, 0), 10, CreateRef<Lambertian>(checker)));
+        objects.Add(CreateRef<Sphere>(glm::dvec3(0, 10, 0), 10, CreateRef<Lambertian>(checker)));
+
+        return objects;
+    }
+
+    HittableList TwoPerlinSpheres() {
+        HittableList objects;
+
+        auto prelinTexture = CreateRef<NoiseTexture>(4);
+
+        objects.Add(CreateRef<Sphere>(glm::dvec3(0, -1000, 0), 1000, CreateRef<Lambertian>(prelinTexture)));
+        objects.Add(CreateRef<Sphere>(glm::dvec3(0, 2, 0), 2, CreateRef<Lambertian>(prelinTexture)));
+
+        return objects;
+    }
+
+    HittableList Earth() {
+        HittableList objects;
+
+        auto earthTexture = CreateRef<ImageTexture>(std::string("earthmap.jpg"));
+        auto earthMaterial = CreateRef<Lambertian>(earthTexture);
+        objects.Add(CreateRef<Sphere>(glm::dvec3(0, 0, 0), 2, earthMaterial));
+
+        return objects;
+    }
+
     int EntryPoint()
     {
         // Window
@@ -132,33 +164,56 @@ namespace TC {
         // World
 
         HittableList world = RandomScene();
-        /*HittableList world;
+        glm::dvec3 lookFrom;
+        glm::dvec3 lookAt;
+        double vFOV = 40.0;
+        auto aperture = 0.0;
 
-        auto materialGround = CreateRef<Lambertian>(glm::dvec3(0.8, 0.8, 0.0));
-        auto materialCenter = CreateRef<Lambertian>(glm::dvec3(0.1, 0.2, 0.5));
-        auto materialLeft = CreateRef<Dielectric>(1.5);
-        auto materialRight = CreateRef<Metal>(glm::dvec3(0.8, 0.6, 0.2), 1.0);
-        
-        world.Add(CreateRef<Sphere>(glm::dvec3(0.0, -100.5, -1.0), 100.0, materialGround));
-        world.Add(CreateRef<Sphere>(glm::dvec3(0.0, 0.0, -1.0), 0.5, materialCenter));
-        world.Add(CreateRef<Sphere>(glm::dvec3(-1.0, 0.0, -1.0), 0.5, materialLeft));
-        world.Add(CreateRef<Sphere>(glm::dvec3(-1.0, 0.0, -1.0), -0.4, materialLeft));
-        world.Add(CreateRef<Sphere>(glm::dvec3(1.0, 0.0, -1.0), 0.5, materialRight));*/
+        switch (0) {
+	        case 1:
+	            world = RandomScene();
+	            lookFrom = glm::dvec3(13, 2, 3);
+                lookAt = glm::dvec3(0, 0, 0);
+	            vFOV = 20.0;
+	            aperture = 0.1;
+	            break;
+
+	        case 2:
+	            world = TwoSpheres();
+                lookFrom = glm::dvec3(13, 2, 3);
+                lookAt = glm::dvec3(0, 0, 0);
+                vFOV = 20.0;
+	            break;
+
+            case 3:
+                world = TwoPerlinSpheres();
+                lookFrom = glm::dvec3(13, 2, 3);
+                lookAt = glm::dvec3(0, 0, 0);
+                vFOV = 20.0;
+                break;
+
+            default:
+            case 4:
+                world = Earth();
+                lookFrom = glm::dvec3(13, 2, 3);
+                lookAt = glm::dvec3(0, 0, 0);
+                vFOV = 20.0;
+                break;
+        }
 
         // Camera
 
-        glm::dvec3 lookFrom(13.0, 2.0, 3.0);
-        glm::dvec3 lookAt(0.0, 0.0, 0.0);
         glm::dvec3 vup(0.0, 1.0, 0.0);
-        auto distToFocus = 10;
-        auto aperture = 0.1;
+        auto distToFocus = 10.0;
 
-        Camera camera(lookFrom, lookAt, vup, 20.0, aspectRatio, aperture, distToFocus);
+        Camera camera(lookFrom, lookAt, vup, vFOV, aspectRatio, aperture, distToFocus, 0.0, 1.0);
 
         // Render
         RendererStats stats = {0};
         uint8_t* imageBuffer = new uint8_t[bufferSize];
-        
+
+        BVHNode test(world, 0.0, 1.0);
+
         for (int i = 0; i < threadCount; ++i)
         {
             int remainder = 0;
@@ -172,7 +227,7 @@ namespace TC {
                 imageWidth,
                 (imageHeight / threadCount) + remainder,
                 i * (imageHeight / threadCount),
-                camera, world, &stats);
+                camera, test, &stats);
         }
 
         while (stats.PixelsRendered != totalPixels)

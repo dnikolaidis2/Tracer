@@ -3,6 +3,7 @@
 #include <glm/gtc/random.hpp>
 
 #include "Ray.h"
+#include "Texture.h"
 
 namespace TC {
 	struct HitRecord;
@@ -16,7 +17,8 @@ namespace TC {
 	class Lambertian : public Material
 	{
 	public:
-		Lambertian(const glm::dvec3& albedo) : Albedo(albedo) {}
+		Lambertian(const glm::dvec3& albedo) : Albedo(CreateRef<SolidTexture>(albedo)) {}
+		Lambertian(Ref<Texture> texture) : Albedo(texture) {}
 
 		virtual bool Scatter(const Ray& rIn, const HitRecord& record, glm::dvec3& attenuation, Ray& scattered) const override
 		{
@@ -26,13 +28,13 @@ namespace TC {
 			if (glm::all(glm::epsilonEqual(scatterDirection, glm::dvec3(0.0), epsilon)))
 				scatterDirection = record.Normal;
 
-			scattered = Ray(record.Point, scatterDirection);
-			attenuation = Albedo;
+			scattered = Ray(record.Point, scatterDirection, rIn.Time);
+			attenuation = Albedo->Value(record.U, record.V, record.Point);
 			return true;
 		}
 
 	public:
-		glm::dvec3 Albedo;
+		Ref<Texture> Albedo;
 	};
 
 	class Metal : public Material
@@ -43,7 +45,7 @@ namespace TC {
 		virtual bool Scatter(const Ray& rIn, const HitRecord& record, glm::dvec3& attenuation, Ray& scattered) const override
 		{
 			glm::dvec3 reflected = glm::reflect(glm::normalize(rIn.Direction), record.Normal);
-			scattered = Ray(record.Point, reflected + Fuzziness * glm::ballRand(1.0));
+			scattered = Ray(record.Point, reflected + Fuzziness * glm::ballRand(1.0), rIn.Time);
 			attenuation = Albedo;
 			return (glm::dot(scattered.Direction, record.Normal) > 0);
 		}
@@ -75,7 +77,7 @@ namespace TC {
 			else
 				direction = glm::refract(unitDirection, record.Normal, refractionRatio);
 
-			scattered = Ray(record.Point, direction);
+			scattered = Ray(record.Point, direction, rIn.Time);
 			return true;
 		}
 	private:

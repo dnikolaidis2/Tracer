@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 
+#include "AABB.h"
 #include "Base.h"
 #include "Ray.h"
 
@@ -15,6 +16,8 @@ namespace TC {
 		glm::dvec3 Normal;
 		Ref<Material> Material;
 		double T;
+		double U;
+		double V;
 		bool FrontFace;
 
 		inline void SetFaceNormal(const Ray& r, const glm::dvec3& outwardNormal)
@@ -28,5 +31,6 @@ namespace TC {
 	{
 	public:
 		virtual bool Hit(const Ray& r, double tMin, double tMax, HitRecord& record) const = 0;
+		virtual bool BoundingBox(double time0, double time1, AABB& outputBox) const = 0;
 	};
 }

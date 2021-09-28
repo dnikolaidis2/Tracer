@@ -14,6 +14,7 @@ namespace TC {
 		void Add(Ref<Hittable> object) { Objects.push_back(object); }
 
 		virtual bool Hit(const Ray& r, double tMin, double tMax, HitRecord& record) const override;
+		virtual bool BoundingBox(double time0, double time1, AABB& outputBox) const override;
 	public:
 		std::vector<Ref<Hittable>> Objects;
 	};

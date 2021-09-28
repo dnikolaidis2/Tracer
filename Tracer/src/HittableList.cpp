@@ -19,4 +19,21 @@ namespace TC {
 
 		return hitAnything;
 	}
+
+	bool HittableList::BoundingBox(double time0, double time1, AABB& outputBox) const
+	{
+		if (Objects.empty()) return false;
+
+		AABB tempBox;
+		bool firstBox = true;
+
+		for (const auto& object : Objects)
+		{
+			if (!object->BoundingBox(time0, time1, tempBox)) return false;
+			outputBox = firstBox ? tempBox : AABB::SurroundingBox(outputBox, tempBox);
+			firstBox = false;
+		}
+
+		return true;
+	}
 }
