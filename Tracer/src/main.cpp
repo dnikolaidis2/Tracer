@@ -5,6 +5,7 @@
 
 #include "AARect.h"
 #include "Base.h"
+#include "Box.h"
 #include "BVH.h"
 #include "Ray.h"
 #include "Hittable.h"
@@ -181,6 +182,9 @@ namespace TC {
         objects.Add(CreateRef<XZRect>(0, 555, 0, 555, 0, white));
         objects.Add(CreateRef<XZRect>(0, 555, 0, 555, 555, white));
         objects.Add(CreateRef<XYRect>(0, 555, 0, 555, 555, white));
+
+        objects.Add(make_shared<Box>(glm::dvec3(130, 0, 65), glm::dvec3(295, 165, 230), white));
+        objects.Add(make_shared<Box>(glm::dvec3(265, 0, 295), glm::dvec3(430, 330, 460), white));
 
         return objects;
     }
