@@ -12,6 +12,10 @@ namespace TC {
 	{
 	public:
 		virtual bool Scatter(const Ray& rIn, const HitRecord& record, glm::dvec3& attenuation, Ray& scattered) const = 0;
+		virtual glm::dvec3 Emitted(double u, double v, const glm::dvec3& point) const
+		{
+			return glm::dvec3(0.0);
+		}
 	};
 
 	class Lambertian : public Material
@@ -72,7 +76,7 @@ namespace TC {
 			bool cannotRefract = (refractionRatio * sinTheta) > 1.0;
 			glm::dvec3 direction;
 
-			if (cannotRefract || (Reflectance(cosTheta, refractionRatio) > RandomDouble()))
+			if (cannotRefract || (Reflectance(cosTheta, refractionRatio) > glm::linearRand(0.0, 1.0)))
 				direction = glm::reflect(unitDirection, record.Normal);
 			else
 				direction = glm::refract(unitDirection, record.Normal, refractionRatio);
@@ -90,5 +94,24 @@ namespace TC {
 		}
 	public:
 		double RefractionIndex;
+	};
+
+	class DiffuseLight : public Material
+	{
+	public:
+		DiffuseLight(Ref<Texture> texture) : Emission(texture) {}
+		DiffuseLight(glm::dvec3 color) : Emission(CreateRef<SolidTexture>(color)) {}
+
+		virtual bool Scatter(const Ray& rIn, const HitRecord& record, glm::dvec3& attenuation, Ray& scattered) const override
+		{
+			return false;
+		}
+
+		virtual glm::dvec3 Emitted(double u, double v, const glm::dvec3& point) const override
+		{
+			return Emission->Value(u, v, point);
+		}
+	public:
+		Ref<Texture> Emission;
 	};
 }

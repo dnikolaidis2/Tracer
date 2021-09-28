@@ -29,16 +29,4 @@ namespace TC {
 		buffer[1] = static_cast<int>(256 * glm::clamp(g, 0.0, 0.999));
 		buffer[2] = static_cast<int>(256 * glm::clamp(b, 0.0, 0.999));
 	}
-
-	inline double RandomDouble() {
-		static std::uniform_real_distribution<double> distribution(0.0, 1.0);
-		static std::mt19937 generator;
-		return distribution(generator);
-	}
-
-
-	inline double RandomDouble(double min, double max) {
-		// Returns a random real in [min,max).
-		return min + (max - min) * RandomDouble();
-	}
 }
